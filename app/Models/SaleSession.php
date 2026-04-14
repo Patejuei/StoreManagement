@@ -9,22 +9,32 @@ class SaleSession extends Model
     protected $table = "sale_sessions";
 
     protected $fillable = [
-        'product_id',
-        'session_id',
-        'quantity',
-        'price',
-        'payment_method',
-        'total',
-        'sale_date',
+        'user_id',
+        'start_date',
+        'end_date',
+        'start_cash',
+        'end_cash',
+        'total_cash_sales',
+        'total_card_sales',
+        'total_transfer_sales',
+        'total_sales',
     ];
 
-    public function product()
+    protected function casts(): array
     {
-        return $this->belongsTo(Product::class);
+        return [
+            'start_date' => 'datetime',
+            'end_date' => 'datetime',
+        ];
     }
 
-    public function session()
+    public function user()
     {
-        return $this->belongsTo(SaleSession::class);
+        return $this->belongsTo(User::class);
+    }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class, 'session_id');
     }
 }

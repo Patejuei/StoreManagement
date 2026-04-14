@@ -4,17 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProductHistory extends Model
+class PurchaseItem extends Model
 {
-    protected $table = "product_history";
-
     protected $fillable = [
+        'purchase_id',
         'product_id',
-        'stock',
-        'movement_type',
-        'price',
-        'details',
+        'quantity',
+        'unit_cost',
+        'subtotal',
     ];
+
+    public function purchase()
+    {
+        return $this->belongsTo(Purchase::class);
+    }
 
     public function product()
     {

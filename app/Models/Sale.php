@@ -23,6 +23,6 @@ class Sale extends Model
 
     public function session()
     {
-        return $this->belongsTo(SalesSession::class);
+        return $this->belongsTo(SaleSession::class, 'session_id');
     }
 }
