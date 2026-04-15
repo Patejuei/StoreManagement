@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\ProductHistory;
-use App\Models\ProtuctSale;
+use App\Models\ProductSale;
 use App\Models\Sale;
 use App\Models\SaleSession;
 use Illuminate\Http\Request;
@@ -22,11 +22,11 @@ class POSController extends Controller
         return Inertia::render('pos/index', [
             'products' => Product::where('is_active', true)->orderBy('name')->get(),
             'activeSession' => $activeSession,
-            'activeOffers' => ProtuctSale::where('is_active', true)
+            'activeOffers' => ProductSale::where('is_active', true)
                 ->where('start_date', '<=', now())
                 ->where(function ($q) {
                     $q->whereNull('end_date')
-                      ->orWhere('end_date', '>', now());
+                        ->orWhere('end_date', '>', now());
                 })
                 ->with('rules.product')
                 ->orderBy('priority', 'desc')

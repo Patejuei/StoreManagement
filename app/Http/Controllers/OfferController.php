@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\ProtuctSale;
-use App\Models\ProtuctSaleRule;
+use App\Models\ProductSale;
+use App\Models\ProductSaleRule;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +13,7 @@ class OfferController extends Controller
     public function index()
     {
         return Inertia::render('offers/index', [
-            'offers' => ProtuctSale::with('rules.product')
+            'offers' => ProductSale::with('rules.product')
                 ->orderBy('priority', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->get(),
@@ -36,7 +36,7 @@ class OfferController extends Controller
             'rules.*.discount_value' => 'required|numeric|min:0',
         ]);
 
-        $offer = ProtuctSale::create([
+        $offer = ProductSale::create([
             'name' => $request->name,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
@@ -45,7 +45,7 @@ class OfferController extends Controller
         ]);
 
         foreach ($request->rules as $rule) {
-            ProtuctSaleRule::create([
+            ProductSaleRule::create([
                 'product_on_sale_id' => $offer->id,
                 'product_id' => $rule['product_id'],
                 'offer_type' => $rule['offer_type'],
@@ -72,7 +72,7 @@ class OfferController extends Controller
             'rules.*.discount_value' => 'required|numeric|min:0',
         ]);
 
-        $offer = ProtuctSale::findOrFail($id);
+        $offer = ProductSale::findOrFail($id);
         $offer->update([
             'name' => $request->name,
             'start_date' => $request->start_date,
@@ -85,7 +85,7 @@ class OfferController extends Controller
         $offer->rules()->delete();
 
         foreach ($request->rules as $rule) {
-            ProtuctSaleRule::create([
+            ProductSaleRule::create([
                 'product_on_sale_id' => $offer->id,
                 'product_id' => $rule['product_id'],
                 'offer_type' => $rule['offer_type'],
@@ -99,7 +99,7 @@ class OfferController extends Controller
 
     public function destroy($id)
     {
-        $offer = ProtuctSale::findOrFail($id);
+        $offer = ProductSale::findOrFail($id);
         $offer->rules()->delete();
         $offer->delete();
 
@@ -108,7 +108,7 @@ class OfferController extends Controller
 
     public function toggleActive($id)
     {
-        $offer = ProtuctSale::findOrFail($id);
+        $offer = ProductSale::findOrFail($id);
         $offer->update(['is_active' => !$offer->is_active]);
 
         $status = $offer->is_active ? 'activada' : 'desactivada';
