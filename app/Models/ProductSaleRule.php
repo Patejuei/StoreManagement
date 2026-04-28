@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class ProtuctSaleRule extends Model
+class ProductSaleRule extends Model
 {
     protected $table = "product_on_sale_rules";
 
@@ -18,11 +18,11 @@ class ProtuctSaleRule extends Model
 
     public function product()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Product::class, 'product_id', 'id');
     }
 
     public function sale()
     {
-        return $this->belongsTo(ProtuctSale::class);
+        return $this->belongsTo(ProductSale::class, 'product_on_sale_id', 'id');
     }
 }

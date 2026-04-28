@@ -36,7 +36,7 @@ class Product extends Model
 
     public function saleRules()
     {
-        return $this->hasMany(ProtuctSaleRule::class);
+        return $this->hasMany(ProductSaleRule::class, 'product_id', 'id');
     }
 
     public function sales()

@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
-class ProtuctSale extends Model
+class ProductSale extends Model
 {
     use BelongsToTenant;
     protected $table = "product_on_sale";
@@ -20,6 +20,6 @@ class ProtuctSale extends Model
 
     public function rules()
     {
-        return $this->hasMany(ProtuctSaleRule::class);
+        return $this->hasMany(ProductSaleRule::class, 'product_on_sale_id', 'id');
     }
 }

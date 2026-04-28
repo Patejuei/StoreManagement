@@ -12,8 +12,8 @@ return new class extends Migration {
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('session_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_id')->constrained('products')->onDelete('cascade');
+            $table->foreignId('session_id')->constrained('sale_sessions')->onDelete('cascade');
             $table->integer('quantity');
             $table->integer('price');
             $table->string('payment_method'); // cash, card, transfer

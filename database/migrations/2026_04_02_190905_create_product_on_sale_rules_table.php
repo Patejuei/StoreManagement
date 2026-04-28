@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('product_on_sale_rules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('product_on_sale_id')->constrained()->onDelete('cascade');
+            $table->foreignId('product_on_sale_id')->constrained('product_on_sale')->onDelete('cascade');
             $table->foreignId('product_id')->constrained()->onDelete('cascade');
             $table->string('offer_type');
             $table->integer('minimal_quantity');
