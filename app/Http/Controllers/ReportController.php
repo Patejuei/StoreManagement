@@ -69,7 +69,8 @@ class ReportController extends Controller
             'purchases' => 'Reporte_Compras',
         ];
 
-        $filename = $titles[$type] . '_' . date('Y-m-d') . '.xlsx';
+        $tenantSlug = app('tenant')->slug ?? 'default';
+        $filename = $titles[$type] . '_' . $tenantSlug . '_' . date('Y-m-d_His') . '.xlsx';
         $path = storage_path("app/{$filename}");
         $writer = new Xlsx($spreadsheet);
         $writer->save($path);

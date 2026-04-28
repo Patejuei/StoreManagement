@@ -13,16 +13,17 @@ export default function AppLayout({
     const tenantPrefix = current_tenant ? `/${current_tenant}` : '';
 
     const tenantBreadcrumbs = breadcrumbs.map((item) => {
-        const isGlobal = ['/settings', '/admin', '/login', '/register'].some(route => item.href.startsWith(route));
-        const shouldPrefix = item.href.startsWith('/') && 
-                           !item.href.startsWith('http') && 
+        const href = typeof item.href === 'string' ? item.href : '';
+        const isGlobal = ['/settings', '/admin', '/login', '/register'].some(route => href.startsWith(route));
+        const shouldPrefix = href.startsWith('/') && 
+                           !href.startsWith('http') && 
                            current_tenant && 
-                           !item.href.startsWith(`/${current_tenant}`) &&
+                           !href.startsWith(`/${current_tenant}`) &&
                            !isGlobal;
 
         return {
             ...item,
-            href: shouldPrefix ? `${tenantPrefix}${item.href}` : item.href,
+            href: shouldPrefix ? `${tenantPrefix}${href}` : item.href,
         };
     });
 
