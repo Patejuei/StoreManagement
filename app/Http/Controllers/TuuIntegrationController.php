@@ -1,16 +1,21 @@
 <?php
+
 namespace App\Http\Controllers;
 
-require_once('vendor/autoload.php');
-
 use Illuminate\Http\Request;
+use GuzzleHttp\Client;
 
 class TuuIntegrationController extends Controller
 {
-    protected $client = new \GuzzleHttp\Client();
-    function payment_request_create(Request $request, string $apiKey)
-    {
+    protected Client $client;
 
+    public function __construct()
+    {
+        $this->client = new Client();
+    }
+
+    public function payment_request_create(Request $request, string $apiKey)
+    {
         $response = $this->client->request('POST', 'https://integrations.payment.haulmer.com/PaymentRequest/Create', [
             'headers' => [
                 'X-API-KEY' => $apiKey,
@@ -20,12 +25,11 @@ class TuuIntegrationController extends Controller
             'body' => 'body'
         ]);
 
-        return response()->json($response);
+        return response()->json(json_decode($response->getBody()->getContents()));
     }
 
-    function get_paymentRequest(string $apiKey, int $paymentId)
+    public function get_paymentRequest(string $apiKey, int $paymentId)
     {
-
         $response = $this->client->request('GET', 'https://integrations.payment.haulmer.com/PaymentRequest/' . $paymentId, [
             'headers' => [
                 'X-API-KEY' => $apiKey,
@@ -33,6 +37,6 @@ class TuuIntegrationController extends Controller
             ]
         ]);
 
-        return response()->json($response);
+        return response()->json(json_decode($response->getBody()->getContents()));
     }
 }

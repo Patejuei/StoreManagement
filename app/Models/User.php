@@ -12,11 +12,7 @@ use App\Traits\BelongsToTenant;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
-<<<<<<< HEAD
 #[Fillable(['name', 'email', 'password', 'is_super_admin', 'tenant_id'])]
-=======
-#[Fillable(['name', 'email', 'password', 'company_id'])]
->>>>>>> c0f8ee709cc220bad47279e6246de9e1d21c21c0
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -38,14 +34,8 @@ class User extends Authenticatable
         ];
     }
 
-<<<<<<< HEAD
     public function isSuperAdmin(): bool
     {
         return (bool) $this->is_super_admin;
-=======
-    public function company()
-    {
-        return $this->belongsTo(Company::class);
->>>>>>> c0f8ee709cc220bad47279e6246de9e1d21c21c0
     }
 }

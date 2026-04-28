@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('api_key');
             $table->string('pos_serial');
-            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
+            $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
             $table->timestamps();
         });
     }

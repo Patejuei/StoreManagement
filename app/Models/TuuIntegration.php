@@ -9,11 +9,11 @@ class TuuIntegration extends Model
     protected $fillable = [
         'api_key',
         'pos_serial',
-        'company_id'
+        'tenant_id'
     ];
 
-    public function company()
+    public function tenant()
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsTo(Tenant::class);
     }
 }
