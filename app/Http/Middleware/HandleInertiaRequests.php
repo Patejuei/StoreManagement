@@ -35,17 +35,28 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $tenantSlug = null;
+
+        if (app()->bound('tenant')) {
+            $tenantSlug = app('tenant')->slug;
+        } elseif ($user && $user->tenant_id) {
+            // Cargar el tenant del usuario si no hay uno en la ruta
+            $tenantSlug = $user->tenant?->slug;
+        }
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'current_tenant' => $tenantSlug,
         ];
     }
 }

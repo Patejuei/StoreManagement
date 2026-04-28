@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 import { FileBarChart, Download, Calendar, CheckSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -74,6 +74,9 @@ const REPORT_TYPES = [
 ];
 
 export default function Reports() {
+    const { current_tenant } = usePage<{ current_tenant?: string }>().props;
+    const tenantPrefix = current_tenant ? `/${current_tenant}` : '/default';
+
     const [reportType, setReportType] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
@@ -103,7 +106,7 @@ export default function Reports() {
         // For file download, use a form submission approach
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '/reports/generate';
+        form.action = `${tenantPrefix}/reports/generate`;
 
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta?.getAttribute('content') || '';

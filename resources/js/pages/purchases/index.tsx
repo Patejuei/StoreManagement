@@ -34,7 +34,8 @@ interface PurchaseLineItem {
 const formatCLP = (amount: number) => `$${amount.toLocaleString('es-CL')}`;
 
 export default function Purchases({ purchases, suppliers, products }: Props) {
-    const { flash } = usePage<{ flash: { success?: string } }>().props;
+    const { flash, current_tenant } = usePage<{ flash: { success?: string }, current_tenant?: string }>().props;
+    const tenantPrefix = current_tenant ? `/${current_tenant}` : '/default';
     const [showForm, setShowForm] = useState(false);
     const [purchaseType, setPurchaseType] = useState<'frequent' | 'external' | null>(null);
     const [showSupplierForm, setShowSupplierForm] = useState(false);
@@ -157,12 +158,14 @@ export default function Purchases({ purchases, suppliers, products }: Props) {
                 suppliers={suppliers}
                 products={products}
                 onAddSupplier={() => setShowSupplierForm(true)}
+                tenantPrefix={tenantPrefix}
             />
 
             {/* ═══════ SUPPLIER FORM DIALOG ═══════ */}
             <SupplierFormDialog
                 open={showSupplierForm}
                 onClose={() => setShowSupplierForm(false)}
+                tenantPrefix={tenantPrefix}
             />
 
             {/* ═══════ DETAIL DIALOG ═══════ */}
@@ -227,7 +230,7 @@ export default function Purchases({ purchases, suppliers, products }: Props) {
    PURCHASE FORM DIALOG
    ═══════════════════════════════════════════════════════════ */
 function PurchaseFormDialog({
-    open, onClose, type, suppliers, products, onAddSupplier,
+    open, onClose, type, suppliers, products, onAddSupplier, tenantPrefix,
 }: {
     open: boolean;
     onClose: () => void;
@@ -235,6 +238,7 @@ function PurchaseFormDialog({
     suppliers: Supplier[];
     products: Product[];
     onAddSupplier: () => void;
+    tenantPrefix: string;
 }) {
     const [supplierId, setSupplierId] = useState('');
     const [invoiceNumber, setInvoiceNumber] = useState('');
@@ -276,7 +280,7 @@ function PurchaseFormDialog({
 
     const handleSubmit = () => {
         setProcessing(true);
-        router.post('/purchases', {
+        router.post(`${tenantPrefix}/purchases`, {
             type: type || 'external',
             supplier_id: type === 'frequent' ? Number(supplierId) : null,
             invoice_number: invoiceNumber || null,
@@ -441,7 +445,7 @@ function PurchaseFormDialog({
 /* ═══════════════════════════════════════════════════════════
    SUPPLIER FORM DIALOG
    ═══════════════════════════════════════════════════════════ */
-function SupplierFormDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function SupplierFormDialog({ open, onClose, tenantPrefix }: { open: boolean; onClose: () => void; tenantPrefix: string }) {
     const [form, setForm] = useState({ name: '', rut: '', phone: '', email: '', address: '', contact_person: '' });
     const [processing, setProcessing] = useState(false);
 
@@ -449,7 +453,7 @@ function SupplierFormDialog({ open, onClose }: { open: boolean; onClose: () => v
 
     const handleSubmit = () => {
         setProcessing(true);
-        router.post('/suppliers', form, {
+        router.post(`${tenantPrefix}/suppliers`, form, {
             onSuccess: () => { onClose(); setForm({ name: '', rut: '', phone: '', email: '', address: '', contact_person: '' }); },
             onFinish: () => setProcessing(false),
         });

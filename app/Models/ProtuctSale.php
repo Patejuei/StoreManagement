@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 class ProtuctSale extends Model
 {
+    use BelongsToTenant;
     protected $table = "product_on_sale";
 
     protected $fillable = [

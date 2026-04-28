@@ -48,7 +48,8 @@ const DENOMINATIONS = [
 ] as const;
 
 export default function POS({ products, activeSession, activeOffers }: Props) {
-    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
+    const { flash, current_tenant } = usePage<{ flash: { success?: string; error?: string }, current_tenant?: string }>().props;
+    const tenantPrefix = current_tenant ? `/${current_tenant}` : '/default';
     const [showStartSession, setShowStartSession] = useState(!activeSession);
     const [showEndSession, setShowEndSession] = useState(false);
     const [showCheckout, setShowCheckout] = useState(false);
@@ -386,6 +387,7 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
             <StartSessionDialog
                 open={showStartSession && !activeSession}
                 onClose={() => setShowStartSession(false)}
+                tenantPrefix={tenantPrefix}
             />
 
             {/* ═══════ END SESSION DIALOG ═══════ */}
@@ -393,6 +395,7 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
                 open={showEndSession}
                 onClose={() => setShowEndSession(false)}
                 session={activeSession}
+                tenantPrefix={tenantPrefix}
             />
 
             {/* ═══════ CHECKOUT DIALOG ═══════ */}
@@ -403,6 +406,7 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
                 sessionId={activeSession?.id}
                 cart={cart}
                 getItemDiscount={getItemDiscount}
+                tenantPrefix={tenantPrefix}
             />
         </>
     );
@@ -411,7 +415,7 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
 /* ═══════════════════════════════════════════════════════════
    START SESSION DIALOG
    ═══════════════════════════════════════════════════════════ */
-function StartSessionDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function StartSessionDialog({ open, onClose, tenantPrefix }: { open: boolean; onClose: () => void; tenantPrefix: string }) {
     const [counts, setCounts] = useState<Record<number, number>>(
         Object.fromEntries(DENOMINATIONS.map((d) => [d.value, 0])),
     );
@@ -421,7 +425,7 @@ function StartSessionDialog({ open, onClose }: { open: boolean; onClose: () => v
 
     const handleSubmit = () => {
         setProcessing(true);
-        router.post('/pos/start-session', { start_cash: total }, {
+        router.post(`${tenantPrefix}/pos/start-session`, { start_cash: total }, {
             onFinish: () => setProcessing(false),
         });
     };
@@ -510,7 +514,7 @@ function StartSessionDialog({ open, onClose }: { open: boolean; onClose: () => v
 /* ═══════════════════════════════════════════════════════════
    END SESSION DIALOG
    ═══════════════════════════════════════════════════════════ */
-function EndSessionDialog({ open, onClose, session }: { open: boolean; onClose: () => void; session: SaleSession | null }) {
+function EndSessionDialog({ open, onClose, session, tenantPrefix }: { open: boolean; onClose: () => void; session: SaleSession | null; tenantPrefix: string }) {
     const [counts, setCounts] = useState<Record<number, number>>(
         Object.fromEntries(DENOMINATIONS.map((d) => [d.value, 0])),
     );
@@ -523,7 +527,7 @@ function EndSessionDialog({ open, onClose, session }: { open: boolean; onClose: 
     const handleSubmit = () => {
         if (!session) return;
         setProcessing(true);
-        router.post('/pos/end-session', { session_id: session.id, end_cash: total }, {
+        router.post(`${tenantPrefix}/pos/end-session`, { session_id: session.id, end_cash: total }, {
             onFinish: () => setProcessing(false),
         });
     };
@@ -610,7 +614,7 @@ function EndSessionDialog({ open, onClose, session }: { open: boolean; onClose: 
    CHECKOUT DIALOG
    ═══════════════════════════════════════════════════════════ */
 function CheckoutDialog({
-    open, onClose, total, sessionId, cart, getItemDiscount,
+    open, onClose, total, sessionId, cart, getItemDiscount, tenantPrefix,
 }: {
     open: boolean;
     onClose: () => void;
@@ -618,6 +622,7 @@ function CheckoutDialog({
     sessionId: number | undefined;
     cart: CartItem[];
     getItemDiscount: (productId: number, quantity: number, unitPrice: number) => number;
+    tenantPrefix: string;
 }) {
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'transfer'>('cash');
     const [cashReceived, setCashReceived] = useState(0);
@@ -629,7 +634,7 @@ function CheckoutDialog({
         if (!sessionId) return;
         setProcessing(true);
         router.post(
-            '/pos/checkout',
+            `${tenantPrefix}/pos/checkout`,
             {
                 session_id: sessionId,
                 items: cart.map((item) => {

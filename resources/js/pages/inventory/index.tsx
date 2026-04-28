@@ -28,7 +28,8 @@ interface Props {
 const formatCLP = (amount: number) => `$${amount.toLocaleString('es-CL')}`;
 
 export default function Inventory({ products, categories, filters }: Props) {
-    const { flash } = usePage<{ flash: { success?: string } }>().props;
+    const { flash, current_tenant } = usePage<{ flash: { success?: string }, current_tenant?: string }>().props;
+    const tenantPrefix = current_tenant ? `/${current_tenant}` : '/default';
     const [search, setSearch] = useState(filters.search || '');
     const [showForm, setShowForm] = useState(false);
     const [editProduct, setEditProduct] = useState<Product | null>(null);
@@ -50,7 +51,7 @@ export default function Inventory({ products, categories, filters }: Props) {
     // Debounced search
     useEffect(() => {
         const t = setTimeout(() => {
-            router.get('/inventory', { search, category: filters.category }, {
+            router.get(`${tenantPrefix}/inventory`, { search, category: filters.category }, {
                 preserveState: true, replace: true, preserveScroll: true,
             });
         }, 400);
@@ -58,7 +59,7 @@ export default function Inventory({ products, categories, filters }: Props) {
     }, [search]);
 
     const handleCategoryChange = (value: string) => {
-        router.get('/inventory', { search: filters.search, category: value === 'all' ? undefined : value }, {
+        router.get(`${tenantPrefix}/inventory`, { search: filters.search, category: value === 'all' ? undefined : value }, {
             preserveState: true, replace: true,
         });
     };
@@ -67,7 +68,7 @@ export default function Inventory({ products, categories, filters }: Props) {
         setHistoryProduct(product);
         setShowHistory(true);
         try {
-            const res = await fetch(`/inventory/${product.id}/history`);
+            const res = await fetch(`${tenantPrefix}/inventory/${product.id}/history`);
             setHistoryData(await res.json());
         } catch {
             setHistoryData([]);
@@ -76,7 +77,7 @@ export default function Inventory({ products, categories, filters }: Props) {
 
     const handleDelete = () => {
         if (!showDelete) return;
-        router.delete(`/inventory/${showDelete.id}`, { onSuccess: () => setShowDelete(null) });
+        router.delete(`${tenantPrefix}/inventory/${showDelete.id}`, { onSuccess: () => setShowDelete(null) });
     };
 
     return (
@@ -98,7 +99,7 @@ export default function Inventory({ products, categories, filters }: Props) {
                     </div>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" asChild>
-                            <a href="/inventory/template/download">
+                            <a href={`${tenantPrefix}/inventory/template/download`}>
                                 <Download className="mr-1.5 h-4 w-4" />Plantilla Excel
                             </a>
                         </Button>
@@ -251,6 +252,7 @@ export default function Inventory({ products, categories, filters }: Props) {
                 open={showForm}
                 onClose={() => { setShowForm(false); setEditProduct(null); }}
                 product={editProduct}
+                tenantPrefix={tenantPrefix}
             />
 
             {/* ═══════ HISTORY DIALOG ═══════ */}
@@ -293,7 +295,7 @@ export default function Inventory({ products, categories, filters }: Props) {
             </Dialog>
 
             {/* ═══════ IMPORT DIALOG ═══════ */}
-            <ImportDialog open={showImport} onClose={() => setShowImport(false)} />
+            <ImportDialog open={showImport} onClose={() => setShowImport(false)} tenantPrefix={tenantPrefix} />
 
             {/* ═══════ DELETE DIALOG ═══════ */}
             <Dialog open={!!showDelete} onOpenChange={() => setShowDelete(null)}>
@@ -320,7 +322,7 @@ export default function Inventory({ products, categories, filters }: Props) {
 /* ═══════════════════════════════════════════════════════════
    PRODUCT FORM DIALOG
    ═══════════════════════════════════════════════════════════ */
-function ProductFormDialog({ open, onClose, product }: { open: boolean; onClose: () => void; product: Product | null }) {
+function ProductFormDialog({ open, onClose, product, tenantPrefix }: { open: boolean; onClose: () => void; product: Product | null; tenantPrefix: string }) {
     const [form, setForm] = useState({
         name: '', brand: '', model: '', category: '', description: '',
         price: 0, stock: 0, critical_stock: 1, sku: '', is_active: true,
@@ -351,7 +353,7 @@ function ProductFormDialog({ open, onClose, product }: { open: boolean; onClose:
     const handleSubmit = () => {
         setProcessing(true);
         const method = product ? 'put' : 'post';
-        const url = product ? `/inventory/${product.id}` : '/inventory';
+        const url = product ? `${tenantPrefix}/inventory/${product.id}` : `${tenantPrefix}/inventory`;
 
         router[method](url, form, {
             onSuccess: () => { onClose(); setProcessing(false); },
@@ -439,7 +441,7 @@ function ProductFormDialog({ open, onClose, product }: { open: boolean; onClose:
 /* ═══════════════════════════════════════════════════════════
    IMPORT DIALOG
    ═══════════════════════════════════════════════════════════ */
-function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function ImportDialog({ open, onClose, tenantPrefix }: { open: boolean; onClose: () => void; tenantPrefix: string }) {
     const [file, setFile] = useState<File | null>(null);
     const [processing, setProcessing] = useState(false);
 
@@ -449,7 +451,7 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
         const formData = new FormData();
         formData.append('file', file);
 
-        router.post('/inventory/import', formData, {
+        router.post(`${tenantPrefix}/inventory/import`, formData, {
             forceFormData: true,
             onSuccess: () => { onClose(); setFile(null); },
             onFinish: () => setProcessing(false),
@@ -471,7 +473,7 @@ function ImportDialog({ open, onClose }: { open: boolean; onClose: () => void })
 
                 <div className="space-y-4">
                     <Button variant="outline" size="sm" asChild className="w-full">
-                        <a href="/inventory/template/download">
+                        <a href={`${tenantPrefix}/inventory/template/download`}>
                             <Download className="mr-2 h-4 w-4" />
                             Descargar Plantilla
                         </a>

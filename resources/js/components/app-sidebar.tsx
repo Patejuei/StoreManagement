@@ -1,5 +1,13 @@
-import { Link } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, ShoppingCart, Package, Truck, FileBarChart, Tags } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import {
+    LayoutGrid,
+    ShoppingCart,
+    Package,
+    Truck,
+    FileBarChart,
+    Tags,
+    House,
+} from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -13,63 +21,63 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
-import type { NavItem } from '@/types';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Punto de Venta',
-        href: '/pos',
-        icon: ShoppingCart,
-    },
-    {
-        title: 'Inventario',
-        href: '/inventory',
-        icon: Package,
-    },
-    {
-        title: 'Compras',
-        href: '/purchases',
-        icon: Truck,
-    },
-    {
-        title: 'Reportes',
-        href: '/reports',
-        icon: FileBarChart,
-    },
-    {
-        title: 'Ofertas',
-        href: '/offers',
-        icon: Tags,
-    },
-];
+import type { NavItem, SharedData } from '@/types';
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Volver a Fluxotec',
+        href: 'http://fluxotec.cl',
+        icon: House,
     },
 ];
 
 export function AppSidebar() {
+    // Obtenemos el tenant actual desde Inertia props
+    const { current_tenant } = usePage<
+        SharedData & { current_tenant?: string }
+    >().props;
+    const tenantPrefix = current_tenant ? `/${current_tenant}` : '/default';
+
+    const mainNavItems: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: `${tenantPrefix}/dashboard`,
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Punto de Venta',
+            href: `${tenantPrefix}/pos`,
+            icon: ShoppingCart,
+        },
+        {
+            title: 'Inventario',
+            href: `${tenantPrefix}/inventory`,
+            icon: Package,
+        },
+        {
+            title: 'Compras',
+            href: `${tenantPrefix}/purchases`,
+            icon: Truck,
+        },
+        {
+            title: 'Reportes',
+            href: `${tenantPrefix}/reports`,
+            icon: FileBarChart,
+        },
+        {
+            title: 'Ofertas',
+            href: `${tenantPrefix}/offers`,
+            icon: Tags,
+        },
+    ];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={`${tenantPrefix}/dashboard`} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

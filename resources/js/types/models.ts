@@ -132,6 +132,14 @@ export interface CartItem {
     unitPrice: number;
 }
 
+export interface Tenant {
+    id: number;
+    name: string;
+    slug: string;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface PaginatedData<T> {
     data: T[];
     current_page: number;

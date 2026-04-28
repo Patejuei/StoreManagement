@@ -1,4 +1,4 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { useMemo } from 'react';
 import {
     AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
@@ -116,13 +116,16 @@ export default function Dashboard({
     movements,
     dailyMovements,
 }: Props) {
+    const { current_tenant } = usePage<{ current_tenant?: string }>().props;
+    const tenantPrefix = current_tenant ? `/${current_tenant}` : '/default';
+
     const [year, month] = currentMonth.split('-').map(Number);
     const monthLabel = `${MONTH_NAMES[month - 1]} ${year}`;
 
     const navigateMonth = (direction: -1 | 1) => {
         const date = new Date(year, month - 1 + direction, 1);
         const newMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        router.get('/dashboard', { month: newMonth }, { preserveState: true, preserveScroll: true });
+        router.get(`${tenantPrefix}/dashboard`, { month: newMonth }, { preserveState: true, preserveScroll: true });
     };
 
     // Average daily sales
@@ -632,7 +635,7 @@ Dashboard.layout = {
     breadcrumbs: [
         {
             title: 'Dashboard',
-            href: dashboard(),
+            href: '/dashboard',
         },
     ],
 };

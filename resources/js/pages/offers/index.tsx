@@ -35,7 +35,8 @@ interface RuleForm {
 const formatCLP = (amount: number) => `$${amount.toLocaleString('es-CL')}`;
 
 export default function Offers({ offers, products }: Props) {
-    const { flash } = usePage<{ flash: { success?: string } }>().props;
+    const { flash, current_tenant } = usePage<{ flash: { success?: string }, current_tenant?: string }>().props;
+    const tenantPrefix = current_tenant ? `/${current_tenant}` : '/default';
     const [showForm, setShowForm] = useState(false);
     const [editOffer, setEditOffer] = useState<ProductSale | null>(null);
     const [showDelete, setShowDelete] = useState<ProductSale | null>(null);
@@ -60,12 +61,12 @@ export default function Offers({ offers, products }: Props) {
     };
 
     const toggleOffer = (id: number) => {
-        router.patch(`/offers/${id}/toggle`, {}, { preserveState: true });
+        router.patch(`${tenantPrefix}/offers/${id}/toggle`, {}, { preserveState: true });
     };
 
     const handleDelete = () => {
         if (!showDelete) return;
-        router.delete(`/offers/${showDelete.id}`, { onSuccess: () => setShowDelete(null) });
+        router.delete(`${tenantPrefix}/offers/${showDelete.id}`, { onSuccess: () => setShowDelete(null) });
     };
 
     return (
@@ -188,6 +189,7 @@ export default function Offers({ offers, products }: Props) {
                 onClose={() => { setShowForm(false); setEditOffer(null); }}
                 offer={editOffer}
                 products={products}
+                tenantPrefix={tenantPrefix}
             />
 
             {/* ═══════ DELETE DIALOG ═══════ */}
@@ -216,12 +218,13 @@ export default function Offers({ offers, products }: Props) {
    OFFER FORM DIALOG
    ═══════════════════════════════════════════════════════════ */
 function OfferFormDialog({
-    open, onClose, offer, products,
+    open, onClose, offer, products, tenantPrefix,
 }: {
     open: boolean;
     onClose: () => void;
     offer: ProductSale | null;
     products: Product[];
+    tenantPrefix: string;
 }) {
     const [name, setName] = useState('');
     const [startDate, setStartDate] = useState('');
@@ -272,12 +275,12 @@ function OfferFormDialog({
         const data = { name, start_date: startDate, end_date: endDate || null, priority, is_active: isActive, rules };
 
         if (offer) {
-            router.put(`/offers/${offer.id}`, data, {
+            router.put(`${tenantPrefix}/offers/${offer.id}`, data, {
                 onSuccess: () => onClose(),
                 onFinish: () => setProcessing(false),
             });
         } else {
-            router.post('/offers', data, {
+            router.post(`${tenantPrefix}/offers`, data, {
                 onSuccess: () => onClose(),
                 onFinish: () => setProcessing(false),
             });

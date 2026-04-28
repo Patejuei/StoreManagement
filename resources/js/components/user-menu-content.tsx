@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings, ShieldCheck } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -32,6 +32,26 @@ export function UserMenuContent({ user }: Props) {
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            
+            {user.is_super_admin && (
+                <>
+                    <DropdownMenuGroup>
+                        <DropdownMenuItem asChild>
+                            <Link
+                                className="block w-full cursor-pointer font-medium text-primary hover:text-primary"
+                                href="/admin/tenants"
+                                prefetch
+                                onClick={cleanup}
+                            >
+                                <ShieldCheck className="mr-2 h-4 w-4" />
+                                Administración Global
+                            </Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                    <DropdownMenuSeparator />
+                </>
+            )}
+
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
                     <Link
@@ -40,7 +60,7 @@ export function UserMenuContent({ user }: Props) {
                         prefetch
                         onClick={cleanup}
                     >
-                        <Settings className="mr-2" />
+                        <Settings className="mr-2 h-4 w-4" />
                         Settings
                     </Link>
                 </DropdownMenuItem>
@@ -54,7 +74,7 @@ export function UserMenuContent({ user }: Props) {
                     onClick={handleLogout}
                     data-test="logout-button"
                 >
-                    <LogOut className="mr-2" />
+                    <LogOut className="mr-2 h-4 w-4" />
                     Log out
                 </Link>
             </DropdownMenuItem>
