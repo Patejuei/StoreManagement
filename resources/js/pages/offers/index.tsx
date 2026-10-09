@@ -194,7 +194,7 @@ export default function Offers({ offers, products }: Props) {
 
             {/* ═══════ DELETE DIALOG ═══════ */}
             <Dialog open={!!showDelete} onOpenChange={() => setShowDelete(null)}>
-                <DialogContent className="max-w-sm">
+                <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-destructive">
                             <AlertCircle className="h-5 w-5" />
@@ -289,7 +289,7 @@ function OfferFormDialog({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-2xl max-h-[85dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Tags className="h-5 w-5 text-primary" />
@@ -304,18 +304,18 @@ function OfferFormDialog({
                             <Label>Nombre de la Oferta *</Label>
                             <Input value={name} onChange={(e) => setName(e.target.value)} className="mt-1" placeholder="Ej: Promo Verano 2026" />
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
                                 <Label>Fecha Inicio *</Label>
-                                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1" />
+                                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1 min-w-0" />
                             </div>
                             <div>
                                 <Label>Fecha Fin</Label>
-                                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1" />
+                                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1 min-w-0" />
                             </div>
                             <div>
                                 <Label>Prioridad</Label>
-                                <Input type="number" min={0} value={priority} onChange={(e) => setPriority(parseInt(e.target.value) || 0)} className="mt-1" />
+                                <Input type="number" inputMode="numeric" min={0} value={priority} onChange={(e) => setPriority(parseInt(e.target.value) || 0)} className="mt-1" />
                             </div>
                         </div>
                         <div className="flex items-center gap-2 pt-1">

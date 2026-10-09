@@ -77,9 +77,54 @@ export default function Purchases({ purchases, suppliers, products }: Props) {
                     </div>
                 </div>
 
-                {/* Purchases Table */}
+                {/* Purchases Table & Mobile Cards */}
                 <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm">
-                    <div className="overflow-x-auto">
+                    {/* Mobile cards view */}
+                    <div className="md:hidden divide-y divide-border/30">
+                        {purchases.data.length === 0 ? (
+                            <div className="py-12 text-center text-muted-foreground">
+                                <Truck className="mx-auto mb-2 h-10 w-10 opacity-30" />
+                                <p className="text-sm">No hay compras registradas</p>
+                            </div>
+                        ) : (
+                            purchases.data.map((purchase) => (
+                                <div
+                                    key={purchase.id}
+                                    onClick={() => setShowDetail(purchase)}
+                                    className="p-3.5 space-y-2 cursor-pointer transition-colors hover:bg-muted/30 active:bg-muted/50"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-semibold text-sm leading-tight">
+                                                {purchase.supplier?.name || 'Compra Directa'}
+                                            </p>
+                                            <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                                                <span>{new Date(purchase.purchase_date).toLocaleDateString('es-CL')}</span>
+                                                {purchase.invoice_number && <span>· Factura: {purchase.invoice_number}</span>}
+                                            </div>
+                                        </div>
+                                        <Badge variant={purchase.type === 'frequent' ? 'default' : 'secondary'} className="text-[10px] shrink-0">
+                                            {purchase.type === 'frequent' ? 'Frecuente' : 'Externa'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1">
+                                        <span className="text-base font-bold text-primary">{formatCLP(purchase.total)}</span>
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                            <span>{purchase.items?.length || 0} ítems</span>
+                                            <Button variant="ghost" size="sm" className="h-8 px-2 text-primary" aria-label="Ver detalle de compra">
+                                                <FileText className="h-4 w-4 mr-1" />
+                                                Detalle
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Desktop table view */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border/50 bg-muted/50">
@@ -114,7 +159,7 @@ export default function Purchases({ purchases, suppliers, products }: Props) {
                                             <td className="px-4 py-3 text-center">{purchase.items?.length || 0}</td>
                                             <td className="px-4 py-3 text-right font-bold text-primary">{formatCLP(purchase.total)}</td>
                                             <td className="px-4 py-3 text-center">
-                                                <Button variant="ghost" size="sm" onClick={() => setShowDetail(purchase)}>
+                                                <Button variant="ghost" size="sm" onClick={() => setShowDetail(purchase)} aria-label="Ver detalle de compra">
                                                     <FileText className="h-4 w-4" />
                                                 </Button>
                                             </td>
@@ -127,19 +172,19 @@ export default function Purchases({ purchases, suppliers, products }: Props) {
 
                     {/* Pagination */}
                     {purchases.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t border-border/50 px-4 py-3">
+                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-t border-border/50 px-4 py-3">
                             <p className="text-xs text-muted-foreground">
                                 Mostrando {purchases.from}–{purchases.to} de {purchases.total}
                             </p>
-                            <div className="flex gap-1">
+                            <div className="flex flex-wrap gap-1">
                                 {purchases.links.map((link, i) => (
                                     <button
                                         key={i}
                                         onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
                                         disabled={!link.url}
                                         className={cn(
-                                            'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
-                                            link.active ? 'bg-primary text-primary-foreground' : link.url ? 'hover:bg-muted' : 'opacity-40',
+                                            'rounded-md px-3 py-1.5 min-h-9 text-xs font-medium transition-colors',
+                                            link.active ? 'bg-primary text-primary-foreground font-bold' : link.url ? 'hover:bg-muted' : 'opacity-40',
                                         )}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
@@ -170,7 +215,7 @@ export default function Purchases({ purchases, suppliers, products }: Props) {
 
             {/* ═══════ DETAIL DIALOG ═══════ */}
             <Dialog open={!!showDetail} onOpenChange={() => setShowDetail(null)}>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <FileText className="h-5 w-5 text-primary" />
@@ -298,7 +343,7 @@ function PurchaseFormDialog({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-2xl max-h-[85dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         {type === 'frequent' ? <Building2 className="h-5 w-5 text-primary" /> : <ShoppingBag className="h-5 w-5 text-primary" />}
@@ -337,10 +382,10 @@ function PurchaseFormDialog({
                             </div>
 
                             {selectedSupplier && (
-                                <div className="grid grid-cols-2 gap-2 rounded-xl bg-muted/40 p-3 text-sm">
+                                <div className="grid grid-cols-1 gap-2 rounded-xl bg-muted/40 p-3 text-sm sm:grid-cols-2">
                                     {selectedSupplier.rut && <div><span className="text-xs text-muted-foreground">RUT:</span> <span className="font-medium">{selectedSupplier.rut}</span></div>}
                                     {selectedSupplier.phone && <div><span className="text-xs text-muted-foreground">Teléfono:</span> <span className="font-medium">{selectedSupplier.phone}</span></div>}
-                                    {selectedSupplier.email && <div><span className="text-xs text-muted-foreground">Email:</span> <span className="font-medium">{selectedSupplier.email}</span></div>}
+                                    {selectedSupplier.email && <div className="break-all"><span className="text-xs text-muted-foreground">Email:</span> <span className="font-medium">{selectedSupplier.email}</span></div>}
                                     {selectedSupplier.contact_person && <div><span className="text-xs text-muted-foreground">Contacto:</span> <span className="font-medium">{selectedSupplier.contact_person}</span></div>}
                                 </div>
                             )}
@@ -348,7 +393,7 @@ function PurchaseFormDialog({
                     )}
 
                     {/* Invoice & Notes */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div>
                             <Label>N° Factura</Label>
                             <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className="mt-1" placeholder="Ej: F-001234" />
@@ -376,9 +421,9 @@ function PurchaseFormDialog({
                                 Agrega productos para esta compra
                             </div>
                         ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                                 {items.map((item, index) => (
-                                    <div key={index} className="flex gap-2 items-end rounded-lg bg-muted/30 p-3 animate-slide-in">
+                                    <div key={index} className="grid grid-cols-1 gap-2.5 rounded-lg bg-muted/30 p-3 sm:flex sm:items-end animate-slide-in">
                                         <div className="flex-1">
                                             <Label className="text-xs">Producto</Label>
                                             <Select onValueChange={(v) => updateItem(index, 'product_id', Number(v))} value={item.product_id ? String(item.product_id) : ''}>
@@ -394,21 +439,30 @@ function PurchaseFormDialog({
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="w-24">
-                                            <Label className="text-xs">Cantidad</Label>
-                                            <Input type="number" min={1} value={item.quantity || ''} onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} className="mt-1 h-9" />
+                                        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
+                                            <div className="w-full sm:w-24">
+                                                <Label className="text-xs">Cantidad</Label>
+                                                <Input type="number" inputMode="numeric" min={1} value={item.quantity || ''} onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)} className="mt-1 h-9" />
+                                            </div>
+                                            <div className="w-full sm:w-28">
+                                                <Label className="text-xs">Costo Unit. ($)</Label>
+                                                <Input type="number" inputMode="numeric" min={0} value={item.unit_cost || ''} onChange={(e) => updateItem(index, 'unit_cost', parseInt(e.target.value) || 0)} className="mt-1 h-9" />
+                                            </div>
                                         </div>
-                                        <div className="w-32">
-                                            <Label className="text-xs">Costo Unit. ($)</Label>
-                                            <Input type="number" min={0} value={item.unit_cost || ''} onChange={(e) => updateItem(index, 'unit_cost', parseInt(e.target.value) || 0)} className="mt-1 h-9" />
+                                        <div className="flex items-center justify-between sm:block sm:w-28 sm:text-right pb-1">
+                                            <div>
+                                                <p className="text-xs text-muted-foreground">Subtotal</p>
+                                                <p className="font-bold text-sm">{formatCLP(item.quantity * item.unit_cost)}</p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeItem(index)}
+                                                aria-label="Quitar producto"
+                                                className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:ml-auto"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
                                         </div>
-                                        <div className="w-28 text-right pb-1">
-                                            <p className="text-xs text-muted-foreground">Subtotal</p>
-                                            <p className="font-bold text-sm">{formatCLP(item.quantity * item.unit_cost)}</p>
-                                        </div>
-                                        <button onClick={() => removeItem(index)} className="pb-1 text-muted-foreground hover:text-destructive">
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -461,7 +515,7 @@ function SupplierFormDialog({ open, onClose, tenantPrefix }: { open: boolean; on
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5 text-primary" />

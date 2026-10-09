@@ -18,6 +18,13 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Product, SaleSession, ProductSale } from '@/types';
 
 interface Props {
@@ -53,10 +60,12 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
     const [showStartSession, setShowStartSession] = useState(!activeSession);
     const [showEndSession, setShowEndSession] = useState(false);
     const [showCheckout, setShowCheckout] = useState(false);
+    const [showMobileCart, setShowMobileCart] = useState(false);
     const [search, setSearch] = useState('');
     const [cart, setCart] = useState<CartItem[]>([]);
     const [flashMsg, setFlashMsg] = useState<string | null>(null);
     const searchRef = useRef<HTMLInputElement>(null);
+    const isMobile = useIsMobile();
 
     // Flash message handler
     useEffect(() => {
@@ -80,15 +89,6 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
         );
     }, [products, search]);
 
-    // Auto-add to cart when only one result
-    useEffect(() => {
-        if (filteredProducts.length === 1 && search.trim().length > 0) {
-            addToCart(filteredProducts[0]);
-            setSearch('');
-            setTimeout(() => searchRef.current?.focus(), 50);
-        }
-    }, [filteredProducts.length, search]);
-
     // Cart operations
     const addToCart = useCallback((product: Product) => {
         if (product.stock <= 0) return;
@@ -109,6 +109,20 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
     const removeFromCart = useCallback((productId: number) => {
         setCart((prev) => prev.filter((item) => item.product.id !== productId));
     }, []);
+
+    // Auto-add to cart only on exact barcode / SKU match or exact name match
+    useEffect(() => {
+        const query = search.trim().toLowerCase();
+        if (!query) return;
+        const exactMatch = products.find(
+            (p) => (p.sku && p.sku.toLowerCase() === query) || p.name.toLowerCase() === query
+        );
+        if (exactMatch && exactMatch.stock > 0) {
+            addToCart(exactMatch);
+            setSearch('');
+            setTimeout(() => searchRef.current?.focus(), 50);
+        }
+    }, [products, search, addToCart]);
 
     const updateQuantity = useCallback((productId: number, qty: number) => {
         if (qty <= 0) {
@@ -165,20 +179,21 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
                 </div>
             )}
 
-            <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
+            <div className="flex flex-col lg:flex-row lg:h-[calc(100dvh-4rem)] gap-4 p-3 sm:p-4 pb-28 lg:pb-4">
                 {/* ═══════ LEFT PANEL — Product Search & Grid ═══════ */}
-                <div className="flex flex-1 flex-col gap-4 overflow-hidden rounded-2xl border border-border/50 bg-card p-5 shadow-sm">
+                <div className="flex flex-1 flex-col gap-4 rounded-2xl border border-border/50 bg-card p-3 sm:p-5 shadow-sm lg:overflow-hidden">
                     {/* Search Bar */}
                     <div className="relative neo-focus rounded-xl border border-border/50 bg-background">
                         <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                         <input
                             ref={searchRef}
-                            type="text"
+                            type="search"
+                            enterKeyHint="search"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Escanear código de barras o buscar producto..."
-                            className="h-14 w-full rounded-xl bg-transparent pl-12 pr-12 text-lg outline-none placeholder:text-muted-foreground/60"
-                            autoFocus
+                            placeholder="Escanear o buscar producto..."
+                            className="h-12 sm:h-14 w-full rounded-xl bg-transparent pl-12 pr-12 text-base sm:text-lg outline-none placeholder:text-muted-foreground/60"
+                            autoFocus={!isMobile}
                             id="pos-search-input"
                         />
                         {search && (
@@ -192,42 +207,42 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
                     </div>
 
                     {/* Product grid */}
-                    <div className="flex-1 overflow-y-auto pr-1">
+                    <div className="flex-1 lg:overflow-y-auto pr-0 lg:pr-1">
                         {filteredProducts.length === 0 ? (
-                            <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+                            <div className="flex min-h-[260px] h-full flex-col items-center justify-center text-muted-foreground">
                                 <Package className="mb-3 h-16 w-16 opacity-30" />
                                 <p className="text-lg font-medium">No se encontraron productos</p>
                                 <p className="text-sm">Intenta con otro término de búsqueda</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                                 {filteredProducts.map((product) => (
                                     <button
                                         key={product.id}
                                         onClick={() => addToCart(product)}
                                         disabled={product.stock <= 0}
                                         className={cn(
-                                            'card-hover group relative flex flex-col rounded-xl border border-border/40 bg-card p-3.5 text-left transition-all',
+                                            'card-hover group relative flex flex-col rounded-xl border border-border/40 bg-card p-2.5 sm:p-3.5 text-left transition-all',
                                             product.stock <= 0
                                                 ? 'cursor-not-allowed opacity-50'
-                                                : 'hover:border-primary/40 hover:shadow-md',
+                                                : 'hover:border-primary/40 hover:shadow-md active:scale-[0.98]',
                                         )}
                                         id={`product-card-${product.id}`}
                                     >
                                         {/* Product image or placeholder */}
-                                        <div className="mb-2.5 flex aspect-square items-center justify-center rounded-lg bg-muted/50">
-                                            <Package className="h-10 w-10 text-muted-foreground/40" />
+                                        <div className="mb-2 flex aspect-square items-center justify-center rounded-lg bg-muted/50">
+                                            <Package className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/40" />
                                         </div>
 
-                                        <p className="line-clamp-2 text-sm font-semibold leading-tight">{product.name}</p>
+                                        <p className="line-clamp-2 text-xs sm:text-sm font-semibold leading-tight">{product.name}</p>
                                         {product.sku && (
-                                            <p className="mt-0.5 font-mono text-xs text-muted-foreground">{product.sku}</p>
+                                            <p className="mt-0.5 font-mono text-[11px] sm:text-xs text-muted-foreground truncate">{product.sku}</p>
                                         )}
-                                        <div className="mt-auto flex items-end justify-between pt-2">
-                                            <span className="text-lg font-bold text-primary">{formatCLP(product.price)}</span>
+                                        <div className="mt-auto flex flex-col sm:flex-row sm:items-end justify-between pt-1.5 sm:pt-2">
+                                            <span className="text-base sm:text-lg font-bold text-primary">{formatCLP(product.price)}</span>
                                             <span
                                                 className={cn(
-                                                    'text-xs font-medium',
+                                                    'text-[10px] sm:text-xs font-medium',
                                                     product.stock <= product.critical_stock
                                                         ? 'stock-critical'
                                                         : product.stock <= product.critical_stock * 3
@@ -241,7 +256,7 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
 
                                         {/* Offer badge */}
                                         {activeOffers.some((o) => o.rules?.some((r) => r.product_id === product.id)) && (
-                                            <div className="absolute -right-1 -top-1 rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-primary-foreground shadow-sm">
+                                            <div className="absolute right-1 top-1 rounded-full bg-primary px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold text-primary-foreground shadow-sm">
                                                 OFERTA
                                             </div>
                                         )}
@@ -253,19 +268,19 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
 
                     {/* Session status bar */}
                     {activeSession && (
-                        <div className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-2 text-sm">
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between rounded-xl bg-muted/50 px-3 sm:px-4 py-2 text-xs sm:text-sm">
                             <span className="text-muted-foreground">
-                                Sesión activa desde{' '}
+                                Sesión activa:{' '}
                                 <span className="font-medium text-foreground">
                                     {new Date(activeSession.start_date).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </span>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-between sm:justify-end gap-3">
                                 <span className="text-muted-foreground">
                                     Ventas: <span className="font-semibold text-primary">{formatCLP(activeSession.total_sales)}</span>
                                 </span>
-                                <Button variant="outline" size="sm" onClick={() => setShowEndSession(true)}>
-                                    <LogOut className="mr-1.5 h-3.5 w-3.5" />
+                                <Button variant="outline" size="sm" onClick={() => setShowEndSession(true)} className="h-8">
+                                    <LogOut className="mr-1 h-3.5 w-3.5" />
                                     Cerrar Caja
                                 </Button>
                             </div>
@@ -273,115 +288,83 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
                     )}
                 </div>
 
-                {/* ═══════ RIGHT PANEL — Cart ═══════ */}
-                <div className="flex w-[340px] flex-col rounded-2xl border border-border/50 bg-card shadow-sm xl:w-[380px]">
-                    {/* Cart header */}
-                    <div className="flex items-center gap-2 border-b border-border/50 px-5 py-4">
-                        <ShoppingCart className="h-5 w-5 text-primary" />
-                        <h2 className="text-lg font-bold">Carrito</h2>
-                        {cart.length > 0 && (
-                            <Badge variant="secondary" className="ml-auto">
-                                {cart.reduce((s, i) => s + i.quantity, 0)} items
-                            </Badge>
-                        )}
-                    </div>
-
-                    {/* Cart items */}
-                    <div className="flex-1 overflow-y-auto px-4 py-3">
-                        {cart.length === 0 ? (
-                            <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
-                                <ShoppingCart className="mb-2 h-12 w-12 opacity-20" />
-                                <p className="text-sm">Carrito vacío</p>
-                                <p className="text-xs">Escanea o selecciona productos</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-2.5">
-                                {cart.map((item) => {
-                                    const discount = getItemDiscount(item.product.id, item.quantity, item.unitPrice);
-                                    const itemTotal = item.unitPrice * item.quantity - discount;
-                                    return (
-                                        <div
-                                            key={item.product.id}
-                                            className="animate-slide-in rounded-xl bg-muted/40 p-3 transition-all"
-                                        >
-                                            <div className="mb-1.5 flex items-start justify-between">
-                                                <div className="flex-1 pr-2">
-                                                    <p className="text-sm font-semibold leading-tight">{item.product.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{formatCLP(item.unitPrice)} c/u</p>
-                                                </div>
-                                                <button
-                                                    onClick={() => removeFromCart(item.product.id)}
-                                                    className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                                >
-                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                </button>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-1.5 rounded-lg border border-border/50 bg-background">
-                                                    <button
-                                                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                                                        className="rounded-l-lg px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                                    >
-                                                        <Minus className="h-3.5 w-3.5" />
-                                                    </button>
-                                                    <span className="min-w-[2rem] text-center text-sm font-bold">{item.quantity}</span>
-                                                    <button
-                                                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
-                                                        className="rounded-r-lg px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                                    >
-                                                        <Plus className="h-3.5 w-3.5" />
-                                                    </button>
-                                                </div>
-                                                <div className="text-right">
-                                                    {discount > 0 && (
-                                                        <p className="text-xs font-medium text-green-500">-{formatCLP(discount)}</p>
-                                                    )}
-                                                    <p className="text-sm font-bold">{formatCLP(itemTotal)}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Cart footer — Totals & Checkout */}
-                    <div className="border-t border-border/50 px-5 py-4">
-                        <div className="mb-2 flex justify-between text-sm">
-                            <span className="text-muted-foreground">Subtotal</span>
-                            <span>{formatCLP(subtotal)}</span>
-                        </div>
-                        {totalDiscount > 0 && (
-                            <div className="mb-2 flex justify-between text-sm font-medium text-green-500">
-                                <span>Descuentos</span>
-                                <span>-{formatCLP(totalDiscount)}</span>
-                            </div>
-                        )}
-                        <Separator className="my-2" />
-                        <div className="mb-4 flex justify-between text-xl font-bold">
-                            <span>Total</span>
-                            <span className="text-primary">{formatCLP(total)}</span>
-                        </div>
-                        <Button
-                            className="glow-primary w-full text-base font-bold"
-                            size="lg"
-                            disabled={cart.length === 0 || !activeSession}
-                            onClick={() => setShowCheckout(true)}
-                            id="pos-checkout-btn"
-                        >
-                            <CreditCard className="mr-2 h-5 w-5" />
-                            Cobrar
-                        </Button>
-                        {!activeSession && (
-                            <p className="mt-2 flex items-center justify-center gap-1 text-xs text-destructive">
-                                <AlertCircle className="h-3.5 w-3.5" />
-                                Inicia una sesión de caja primero
-                            </p>
-                        )}
-                    </div>
+                {/* ═══════ RIGHT PANEL — Desktop Cart ═══════ */}
+                <div className="hidden lg:flex w-[340px] flex-col rounded-2xl border border-border/50 bg-card shadow-sm xl:w-[380px]">
+                    <CartPanel
+                        cart={cart}
+                        getItemDiscount={getItemDiscount}
+                        updateQuantity={updateQuantity}
+                        removeFromCart={removeFromCart}
+                        subtotal={subtotal}
+                        totalDiscount={totalDiscount}
+                        total={total}
+                        activeSession={activeSession}
+                        onCheckout={() => setShowCheckout(true)}
+                    />
                 </div>
             </div>
+
+            {/* ═══════ MOBILE STICKY BOTTOM BAR ═══════ */}
+            <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur-md px-4 py-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden shadow-lg">
+                <div className="flex items-center justify-between gap-3">
+                    <button
+                        type="button"
+                        onClick={() => setShowMobileCart(true)}
+                        className="flex flex-1 items-center gap-2.5 rounded-xl border border-border/50 bg-muted/40 px-3 py-2 text-left"
+                    >
+                        <div className="relative">
+                            <ShoppingCart className="h-5 w-5 text-primary" />
+                            {cart.length > 0 && (
+                                <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
+                                    {cart.reduce((s, i) => s + i.quantity, 0)}
+                                </span>
+                            )}
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[11px] text-muted-foreground leading-tight">Total orden</p>
+                            <p className="text-base font-bold text-primary leading-tight">{formatCLP(total)}</p>
+                        </div>
+                    </button>
+
+                    <Button
+                        size="lg"
+                        disabled={cart.length === 0 || !activeSession}
+                        onClick={() => setShowCheckout(true)}
+                        className="glow-primary h-12 px-6 font-bold text-sm shrink-0"
+                    >
+                        <CreditCard className="mr-1.5 h-4 w-4" />
+                        Cobrar
+                    </Button>
+                </div>
+            </div>
+
+            {/* ═══════ MOBILE CART SHEET ═══════ */}
+            <Sheet open={showMobileCart} onOpenChange={setShowMobileCart}>
+                <SheetContent side="bottom" className="h-[85dvh] rounded-t-2xl p-0 flex flex-col">
+                    <SheetHeader className="border-b border-border/50 px-4 py-3">
+                        <SheetTitle className="flex items-center gap-2 text-base">
+                            <ShoppingCart className="h-5 w-5 text-primary" />
+                            Carrito de Compras ({cart.reduce((s, i) => s + i.quantity, 0)})
+                        </SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 overflow-hidden flex flex-col">
+                        <CartPanel
+                            cart={cart}
+                            getItemDiscount={getItemDiscount}
+                            updateQuantity={updateQuantity}
+                            removeFromCart={removeFromCart}
+                            subtotal={subtotal}
+                            totalDiscount={totalDiscount}
+                            total={total}
+                            activeSession={activeSession}
+                            onCheckout={() => {
+                                setShowMobileCart(false);
+                                setShowCheckout(true);
+                            }}
+                        />
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             {/* ═══════ START SESSION DIALOG ═══════ */}
             <StartSessionDialog
@@ -413,6 +396,147 @@ export default function POS({ products, activeSession, activeOffers }: Props) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   CART PANEL COMPONENT (Shared between desktop and mobile sheet)
+   ═══════════════════════════════════════════════════════════ */
+function CartPanel({
+    cart,
+    getItemDiscount,
+    updateQuantity,
+    removeFromCart,
+    subtotal,
+    totalDiscount,
+    total,
+    activeSession,
+    onCheckout,
+}: {
+    cart: CartItem[];
+    getItemDiscount: (productId: number, quantity: number, unitPrice: number) => number;
+    updateQuantity: (productId: number, qty: number) => void;
+    removeFromCart: (productId: number) => void;
+    subtotal: number;
+    totalDiscount: number;
+    total: number;
+    activeSession: SaleSession | null;
+    onCheckout: () => void;
+}) {
+    return (
+        <div className="flex h-full flex-col">
+            {/* Cart header */}
+            <div className="hidden lg:flex items-center gap-2 border-b border-border/50 px-5 py-4">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+                <h2 className="text-lg font-bold">Carrito</h2>
+                {cart.length > 0 && (
+                    <Badge variant="secondary" className="ml-auto">
+                        {cart.reduce((s, i) => s + i.quantity, 0)} items
+                    </Badge>
+                )}
+            </div>
+
+            {/* Cart items list */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+                {cart.length === 0 ? (
+                    <div className="flex h-full min-h-[160px] flex-col items-center justify-center text-muted-foreground">
+                        <ShoppingCart className="mb-2 h-12 w-12 opacity-20" />
+                        <p className="text-sm font-medium">Carrito vacío</p>
+                        <p className="text-xs">Selecciona productos del catálogo</p>
+                    </div>
+                ) : (
+                    <div className="space-y-2.5">
+                        {cart.map((item) => {
+                            const discount = getItemDiscount(item.product.id, item.quantity, item.unitPrice);
+                            const itemTotal = item.unitPrice * item.quantity - discount;
+                            return (
+                                <div
+                                    key={item.product.id}
+                                    className="animate-slide-in rounded-xl bg-muted/40 p-3 transition-all"
+                                >
+                                    <div className="mb-2 flex items-start justify-between">
+                                        <div className="flex-1 pr-2">
+                                            <p className="text-sm font-semibold leading-tight line-clamp-2">{item.product.name}</p>
+                                            <p className="text-xs text-muted-foreground mt-0.5">{formatCLP(item.unitPrice)} c/u</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeFromCart(item.product.id)}
+                                            aria-label="Quitar producto"
+                                            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center rounded-lg border border-border/50 bg-background shadow-xs">
+                                            <button
+                                                type="button"
+                                                onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                                                aria-label="Disminuir cantidad"
+                                                className="flex h-9 w-9 items-center justify-center rounded-l-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted/80"
+                                            >
+                                                <Minus className="h-3.5 w-3.5" />
+                                            </button>
+                                            <span className="min-w-[2.5rem] text-center text-sm font-bold">{item.quantity}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                                                aria-label="Aumentar cantidad"
+                                                className="flex h-9 w-9 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground active:bg-muted/80"
+                                            >
+                                                <Plus className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                        <div className="text-right">
+                                            {discount > 0 && (
+                                                <p className="text-xs font-medium text-green-500">-{formatCLP(discount)}</p>
+                                            )}
+                                            <p className="text-sm font-bold">{formatCLP(itemTotal)}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </div>
+
+            {/* Cart footer — Totals & Checkout */}
+            <div className="border-t border-border/50 px-4 sm:px-5 py-3 sm:py-4 bg-card">
+                <div className="mb-1.5 flex justify-between text-xs sm:text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatCLP(subtotal)}</span>
+                </div>
+                {totalDiscount > 0 && (
+                    <div className="mb-1.5 flex justify-between text-xs sm:text-sm font-medium text-green-500">
+                        <span>Descuentos</span>
+                        <span>-{formatCLP(totalDiscount)}</span>
+                    </div>
+                )}
+                <Separator className="my-2" />
+                <div className="mb-3 flex justify-between text-lg sm:text-xl font-bold">
+                    <span>Total</span>
+                    <span className="text-primary">{formatCLP(total)}</span>
+                </div>
+                <Button
+                    className="glow-primary w-full h-12 text-base font-bold"
+                    size="lg"
+                    disabled={cart.length === 0 || !activeSession}
+                    onClick={onCheckout}
+                    id="pos-checkout-btn"
+                >
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Cobrar {formatCLP(total)}
+                </Button>
+                {!activeSession && (
+                    <p className="mt-2 flex items-center justify-center gap-1 text-xs text-destructive">
+                        <AlertCircle className="h-3.5 w-3.5" />
+                        Inicia una sesión de caja primero
+                    </p>
+                )}
+            </div>
+        </div>
+    );
+}
+
+/* ═══════════════════════════════════════════════════════════
    START SESSION DIALOG
    ═══════════════════════════════════════════════════════════ */
 function StartSessionDialog({ open, onClose, tenantPrefix }: { open: boolean; onClose: () => void; tenantPrefix: string }) {
@@ -436,7 +560,7 @@ function StartSessionDialog({ open, onClose, tenantPrefix }: { open: boolean; on
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl">
                         <DollarSign className="h-6 w-6 text-primary" />
@@ -457,6 +581,7 @@ function StartSessionDialog({ open, onClose, tenantPrefix }: { open: boolean; on
                                     <span className="text-muted-foreground">×</span>
                                     <Input
                                         type="number"
+                                        inputMode="numeric"
                                         min={0}
                                         value={counts[d.value] || ''}
                                         onChange={(e) => updateCount(d.value, parseInt(e.target.value) || 0)}
@@ -479,6 +604,7 @@ function StartSessionDialog({ open, onClose, tenantPrefix }: { open: boolean; on
                                     <span className="text-muted-foreground">×</span>
                                     <Input
                                         type="number"
+                                        inputMode="numeric"
                                         min={0}
                                         value={counts[d.value] || ''}
                                         onChange={(e) => updateCount(d.value, parseInt(e.target.value) || 0)}
@@ -534,7 +660,7 @@ function EndSessionDialog({ open, onClose, session, tenantPrefix }: { open: bool
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2 text-xl">
                         <LogOut className="h-6 w-6 text-primary" />
@@ -572,6 +698,7 @@ function EndSessionDialog({ open, onClose, session, tenantPrefix }: { open: bool
                             <span className="text-muted-foreground">×</span>
                             <Input
                                 type="number"
+                                inputMode="numeric"
                                 min={0}
                                 value={counts[d.value] || ''}
                                 onChange={(e) => setCounts({ ...counts, [d.value]: Math.max(0, parseInt(e.target.value) || 0) })}
@@ -669,7 +796,7 @@ function CheckoutDialog({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="sm:max-w-sm max-h-[90dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="text-xl">Cobrar</DialogTitle>
                 </DialogHeader>
@@ -706,12 +833,36 @@ function CheckoutDialog({
                             <Label className="text-sm text-muted-foreground">Efectivo Recibido</Label>
                             <Input
                                 type="number"
+                                inputMode="numeric"
                                 value={cashReceived || ''}
                                 onChange={(e) => setCashReceived(parseInt(e.target.value) || 0)}
                                 className="mt-1 h-14 text-center text-2xl font-bold"
-                                autoFocus
                             />
                         </div>
+
+                        {/* Quick-cash chips */}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                            <button
+                                type="button"
+                                onClick={() => setCashReceived(total)}
+                                className="flex-1 rounded-lg border border-border/60 bg-muted/30 py-2 text-xs font-semibold hover:bg-muted"
+                            >
+                                Exacto
+                            </button>
+                            {[5000, 10000, 20000].map((amt) => (
+                                amt >= total && (
+                                    <button
+                                        key={amt}
+                                        type="button"
+                                        onClick={() => setCashReceived(amt)}
+                                        className="flex-1 rounded-lg border border-border/60 bg-muted/30 py-2 text-xs font-semibold hover:bg-muted"
+                                    >
+                                        {formatCLP(amt)}
+                                    </button>
+                                )
+                            ))}
+                        </div>
+
                         {cashReceived > 0 && (
                             <div
                                 className={cn(

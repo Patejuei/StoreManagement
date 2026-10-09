@@ -57,12 +57,56 @@ export default function TenantIndex({ tenants }: Props) {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar por nombre o slug..."
-                        className="h-10 w-full rounded-lg bg-transparent pl-10 pr-4 text-sm outline-none"
+                        type="search"
+                        enterKeyHint="search"
+                        className="h-10 w-full rounded-lg bg-transparent pl-10 pr-4 text-base sm:text-sm outline-none"
                     />
                 </div>
 
+                {/* Tenants Table & Mobile Cards */}
                 <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm">
-                    <div className="overflow-x-auto">
+                    {/* Mobile cards view */}
+                    <div className="md:hidden divide-y divide-border/30">
+                        {filteredTenants.length === 0 ? (
+                            <div className="py-12 text-center text-muted-foreground">
+                                <Store className="mx-auto mb-2 h-10 w-10 opacity-30" />
+                                <p className="text-sm">No se encontraron tiendas</p>
+                            </div>
+                        ) : (
+                            filteredTenants.map((tenant) => (
+                                <div key={tenant.id} className="p-3.5 space-y-2.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-semibold text-sm leading-tight">{tenant.name}</p>
+                                            <p className="font-mono text-xs text-muted-foreground mt-0.5">/{tenant.slug}</p>
+                                        </div>
+                                        <span className="font-mono text-[11px] text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                                            ID #{tenant.id}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-2 pt-1">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => openEdit(tenant)}
+                                            className="h-9 px-3 text-primary hover:bg-primary/10"
+                                            aria-label="Editar tienda"
+                                        >
+                                            <Pencil className="h-4 w-4 mr-1.5" />
+                                            Editar
+                                        </Button>
+                                        <Button variant="outline" size="sm" asChild className="h-9 px-3">
+                                            <a href={`/${tenant.slug}/dashboard`}>Ver Panel</a>
+                                        </Button>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Desktop table view */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm text-left">
                             <thead>
                                 <tr className="border-b border-border/50 bg-muted/50">
@@ -92,7 +136,7 @@ export default function TenantIndex({ tenants }: Props) {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2">
-                                                    <Button variant="ghost" size="sm" onClick={() => openEdit(tenant)} className="text-primary hover:bg-primary/10">
+                                                    <Button variant="ghost" size="sm" onClick={() => openEdit(tenant)} className="text-primary hover:bg-primary/10" aria-label="Editar tienda">
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>
                                                     <Button variant="outline" size="sm" asChild>
@@ -146,7 +190,7 @@ function TenantFormDialog({ open, onClose, tenant }: { open: boolean; onClose: (
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Store className="h-5 w-5 text-primary" />
@@ -176,6 +220,9 @@ function TenantFormDialog({ open, onClose, tenant }: { open: boolean; onClose: (
                         <Label>Slug (URL)</Label>
                         <Input 
                             value={form.slug} 
+                            autoCapitalize="none"
+                            autoCorrect="off"
+                            spellCheck={false}
                             onChange={(e) => setForm(prev => ({ ...prev, slug: e.target.value }))} 
                         />
                         {errors.slug && <p className="text-xs text-destructive">{errors.slug}</p>}
@@ -185,7 +232,7 @@ function TenantFormDialog({ open, onClose, tenant }: { open: boolean; onClose: (
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose}>Cancelar</Button>
                     <Button onClick={handleSubmit} disabled={processing} className="glow-primary">
-                        Crear Tienda
+                        {tenant ? 'Guardar Cambios' : 'Crear Tienda'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

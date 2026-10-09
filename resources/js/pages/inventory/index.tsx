@@ -120,7 +120,9 @@ export default function Inventory({ products, categories, filters }: Props) {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             placeholder="Buscar por nombre, SKU, marca..."
-                            className="h-10 w-full rounded-lg bg-transparent pl-10 pr-4 text-sm outline-none"
+                            type="search"
+                            enterKeyHint="search"
+                            className="h-10 w-full rounded-lg bg-transparent pl-10 pr-4 text-base sm:text-sm outline-none"
                             id="inventory-search"
                         />
                     </div>
@@ -137,9 +139,79 @@ export default function Inventory({ products, categories, filters }: Props) {
                     </Select>
                 </div>
 
-                {/* Table */}
+                {/* Products view: Table on desktop, Cards on mobile */}
                 <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm">
-                    <div className="overflow-x-auto">
+                    {/* Mobile cards view */}
+                    <div className="md:hidden divide-y divide-border/30">
+                        {products.data.length === 0 ? (
+                            <div className="py-12 text-center text-muted-foreground">
+                                <Package className="mx-auto mb-2 h-10 w-10 opacity-30" />
+                                <p className="text-sm">No se encontraron productos</p>
+                            </div>
+                        ) : (
+                            products.data.map((product) => (
+                                <div key={product.id} className="p-3.5 space-y-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-semibold text-sm leading-tight">{product.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                                                {product.sku && <span className="font-mono">{product.sku}</span>}
+                                                {product.brand && <span>· {product.brand}</span>}
+                                                {product.category && <span>· {product.category}</span>}
+                                            </div>
+                                        </div>
+                                        <Badge variant={product.is_active ? 'default' : 'secondary'} className="text-[10px] shrink-0">
+                                            {product.is_active ? 'Activo' : 'Inactivo'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1">
+                                        <div>
+                                            <span className="text-base font-bold text-primary">{formatCLP(product.price)}</span>
+                                            <span className="ml-2.5 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold"
+                                                style={{
+                                                    backgroundColor: product.stock <= product.critical_stock ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                                                    color: product.stock <= product.critical_stock ? '#ef4444' : '#22c55e',
+                                                }}
+                                            >
+                                                Stock: {product.stock}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => openHistory(product)}
+                                                aria-label="Ver historial de movimientos"
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+                                            >
+                                                <History className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => { setEditProduct(product); setShowForm(true); }}
+                                                aria-label="Editar producto"
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowDelete(product)}
+                                                aria-label="Eliminar producto"
+                                                className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Desktop table view */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border/50 bg-muted/50">
@@ -191,6 +263,7 @@ export default function Inventory({ products, categories, filters }: Props) {
                                                     <button
                                                         onClick={() => openHistory(product)}
                                                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                                        aria-label="Historial"
                                                         title="Historial"
                                                     >
                                                         <History className="h-4 w-4" />
@@ -198,6 +271,7 @@ export default function Inventory({ products, categories, filters }: Props) {
                                                     <button
                                                         onClick={() => { setEditProduct(product); setShowForm(true); }}
                                                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                                        aria-label="Editar"
                                                         title="Editar"
                                                     >
                                                         <Pencil className="h-4 w-4" />
@@ -205,6 +279,7 @@ export default function Inventory({ products, categories, filters }: Props) {
                                                     <button
                                                         onClick={() => setShowDelete(product)}
                                                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                                        aria-label="Eliminar"
                                                         title="Eliminar"
                                                     >
                                                         <Trash2 className="h-4 w-4" />
@@ -220,20 +295,20 @@ export default function Inventory({ products, categories, filters }: Props) {
 
                     {/* Pagination */}
                     {products.last_page > 1 && (
-                        <div className="flex items-center justify-between border-t border-border/50 px-4 py-3">
+                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between border-t border-border/50 px-4 py-3">
                             <p className="text-xs text-muted-foreground">
                                 Mostrando {products.from}–{products.to} de {products.total}
                             </p>
-                            <div className="flex gap-1">
+                            <div className="flex flex-wrap gap-1">
                                 {products.links.map((link, i) => (
                                     <button
                                         key={i}
                                         onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
                                         disabled={!link.url}
                                         className={cn(
-                                            'rounded-md px-3 py-1.5 text-xs font-medium transition-colors',
+                                            'rounded-md px-3 py-1.5 min-h-9 text-xs font-medium transition-colors',
                                             link.active
-                                                ? 'bg-primary text-primary-foreground'
+                                                ? 'bg-primary text-primary-foreground font-bold'
                                                 : link.url
                                                   ? 'hover:bg-muted'
                                                   : 'opacity-40',
@@ -257,14 +332,14 @@ export default function Inventory({ products, categories, filters }: Props) {
 
             {/* ═══════ HISTORY DIALOG ═══════ */}
             <Dialog open={showHistory} onOpenChange={() => setShowHistory(false)}>
-                <DialogContent className="max-w-lg">
+                <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <History className="h-5 w-5 text-primary" />
                             Historial — {historyProduct?.name}
                         </DialogTitle>
                     </DialogHeader>
-                    <div className="max-h-[50vh] overflow-y-auto">
+                    <div className="max-h-[60dvh] overflow-y-auto">
                         {historyData.length === 0 ? (
                             <p className="py-8 text-center text-muted-foreground">Sin movimientos registrados</p>
                         ) : (
@@ -299,7 +374,7 @@ export default function Inventory({ products, categories, filters }: Props) {
 
             {/* ═══════ DELETE DIALOG ═══════ */}
             <Dialog open={!!showDelete} onOpenChange={() => setShowDelete(null)}>
-                <DialogContent className="max-w-sm">
+                <DialogContent className="sm:max-w-sm">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-destructive">
                             <AlertCircle className="h-5 w-5" />
@@ -366,7 +441,7 @@ function ProductFormDialog({ open, onClose, product, tenantPrefix }: { open: boo
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="sm:max-w-lg">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-primary" />
@@ -374,9 +449,9 @@ function ProductFormDialog({ open, onClose, product, tenantPrefix }: { open: boo
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="grid gap-4 max-h-[60vh] overflow-y-auto pr-1">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="col-span-2">
+                <div className="grid gap-4 max-h-[70dvh] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="sm:col-span-2">
                             <Label>Nombre *</Label>
                             <Input value={form.name} onChange={(e) => update('name', e.target.value)} className="mt-1" />
                             {errors.name && <p className="mt-1 text-xs text-destructive">{errors.name}</p>}
@@ -400,18 +475,18 @@ function ProductFormDialog({ open, onClose, product, tenantPrefix }: { open: boo
                         </div>
                         <div>
                             <Label>Precio (CLP) *</Label>
-                            <Input type="number" value={form.price || ''} onChange={(e) => update('price', parseInt(e.target.value) || 0)} className="mt-1" />
+                            <Input type="number" inputMode="numeric" value={form.price || ''} onChange={(e) => update('price', parseInt(e.target.value) || 0)} className="mt-1" />
                             {errors.price && <p className="mt-1 text-xs text-destructive">{errors.price}</p>}
                         </div>
                         <div>
                             <Label>Stock *</Label>
-                            <Input type="number" value={form.stock || ''} onChange={(e) => update('stock', parseInt(e.target.value) || 0)} className="mt-1" />
+                            <Input type="number" inputMode="numeric" value={form.stock || ''} onChange={(e) => update('stock', parseInt(e.target.value) || 0)} className="mt-1" />
                         </div>
                         <div>
                             <Label>Stock Crítico</Label>
-                            <Input type="number" value={form.critical_stock || ''} onChange={(e) => update('critical_stock', parseInt(e.target.value) || 1)} className="mt-1" />
+                            <Input type="number" inputMode="numeric" value={form.critical_stock || ''} onChange={(e) => update('critical_stock', parseInt(e.target.value) || 1)} className="mt-1" />
                         </div>
-                        <div className="flex items-center gap-2 pt-4">
+                        <div className="flex items-center gap-2 pt-4 sm:col-span-2">
                             <Checkbox checked={form.is_active} onCheckedChange={(v) => update('is_active', !!v)} id="is-active" />
                             <Label htmlFor="is-active">Producto activo</Label>
                         </div>
@@ -460,7 +535,7 @@ function ImportDialog({ open, onClose, tenantPrefix }: { open: boolean; onClose:
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <FileSpreadsheet className="h-5 w-5 text-primary" />

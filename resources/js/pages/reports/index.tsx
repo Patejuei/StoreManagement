@@ -162,7 +162,7 @@ export default function Reports() {
                                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">1</span>
                                 <h2 className="font-semibold">Tipo de Reporte</h2>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {REPORT_TYPES.map((type) => (
                                     <button
                                         key={type.value}
@@ -193,14 +193,14 @@ export default function Reports() {
                                             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">2</span>
                                             <h2 className="font-semibold">Periodo del Reporte</h2>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                             <div>
                                                 <Label className="text-xs text-muted-foreground">Fecha Inicio</Label>
-                                                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1" />
+                                                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="mt-1 min-w-0" />
                                             </div>
                                             <div>
                                                 <Label className="text-xs text-muted-foreground">Fecha Fin</Label>
-                                                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1" />
+                                                <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="mt-1 min-w-0" />
                                             </div>
                                         </div>
                                     </div>
@@ -222,7 +222,7 @@ export default function Reports() {
                                             {selectedFields.length === currentReport?.fields.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2">
                                         {currentReport?.fields.map((field) => (
                                             <label
                                                 key={field.value}

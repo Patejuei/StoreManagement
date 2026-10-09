@@ -74,12 +74,87 @@ export default function UserIndex({ users, tenants }: Props) {
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         placeholder="Buscar por nombre o email..."
-                        className="h-10 w-full rounded-lg bg-transparent pl-10 pr-4 text-sm outline-none"
+                        type="search"
+                        enterKeyHint="search"
+                        className="h-10 w-full rounded-lg bg-transparent pl-10 pr-4 text-base sm:text-sm outline-none"
                     />
                 </div>
 
+                {/* Users Table & Mobile Cards */}
                 <div className="overflow-hidden rounded-xl border border-border/50 bg-card shadow-sm">
-                    <div className="overflow-x-auto">
+                    {/* Mobile cards view */}
+                    <div className="md:hidden divide-y divide-border/30">
+                        {filteredUsers.length === 0 ? (
+                            <div className="py-12 text-center text-muted-foreground">
+                                <Users className="mx-auto mb-2 h-10 w-10 opacity-30" />
+                                <p className="text-sm">No se encontraron usuarios</p>
+                            </div>
+                        ) : (
+                            filteredUsers.map((user) => (
+                                <div key={user.id} className="p-3.5 space-y-2.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-semibold text-sm leading-tight">{user.name}</p>
+                                            <p className="text-xs text-muted-foreground break-all mt-0.5">{user.email}</p>
+                                        </div>
+                                        {user.is_super_admin ? (
+                                            <Badge className="bg-primary/20 text-primary hover:bg-primary/30 border-primary/30 text-[10px] shrink-0">
+                                                <Shield className="mr-1 h-3 w-3" /> Super Admin
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="outline" className="text-muted-foreground text-[10px] shrink-0">
+                                                Usuario
+                                            </Badge>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1">
+                                        <div className="text-xs text-muted-foreground">
+                                            {user.tenant ? (
+                                                <div className="flex items-center gap-1.5">
+                                                    <Store className="h-3.5 w-3.5" />
+                                                    <span className="font-medium text-foreground">{user.tenant.name}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="italic">Sin tienda</span>
+                                            )}
+                                        </div>
+
+                                        <div className="flex items-center gap-1">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => openEdit(user)}
+                                                className="h-9 w-9 p-0 text-primary hover:bg-primary/10"
+                                                aria-label="Editar usuario"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            {auth.user.id !== user.id ? (
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    onClick={() => handleToggleAdmin(user)}
+                                                    className={cn(
+                                                        'h-9 w-9 p-0',
+                                                        user.is_super_admin ? 'text-destructive hover:bg-destructive/10' : 'text-primary hover:bg-primary/10'
+                                                    )}
+                                                    aria-label={user.is_super_admin ? 'Quitar Admin' : 'Hacer Admin'}
+                                                >
+                                                    {user.is_super_admin ? <ShieldAlert className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                                                </Button>
+                                            ) : (
+                                                <span className="text-[10px] text-muted-foreground italic px-2">(Tú)</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Desktop table view */}
+                    <div className="hidden md:block overflow-x-auto">
                         <table className="w-full text-sm text-left">
                             <thead>
                                 <tr className="border-b border-border/50 bg-muted/50">
@@ -129,7 +204,7 @@ export default function UserIndex({ users, tenants }: Props) {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-1">
-                                                    <Button variant="ghost" size="sm" onClick={() => openEdit(user)} className="text-primary hover:bg-primary/10">
+                                                    <Button variant="ghost" size="sm" onClick={() => openEdit(user)} className="text-primary hover:bg-primary/10" aria-label="Editar usuario">
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>
                                                     {auth.user.id !== user.id ? (
@@ -138,6 +213,7 @@ export default function UserIndex({ users, tenants }: Props) {
                                                             size="sm" 
                                                             onClick={() => handleToggleAdmin(user)}
                                                             className={user.is_super_admin ? 'text-destructive hover:bg-destructive/10' : 'text-primary hover:bg-primary/10'}
+                                                            aria-label={user.is_super_admin ? 'Quitar Admin' : 'Hacer Admin'}
                                                             title={user.is_super_admin ? 'Quitar Admin' : 'Hacer Admin'}
                                                         >
                                                             {user.is_super_admin ? <ShieldAlert className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
@@ -220,7 +296,7 @@ function UserFormDialog({ open, onClose, user, tenants }: { open: boolean; onClo
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[85dvh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <Users className="h-5 w-5 text-primary" />
